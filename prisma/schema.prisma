@@ -1,0 +1,244 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String                   @id @default(cuid())
+  name                  String
+  email                 String                   @unique
+  passwordHash          String
+  role                  String                   @default("student")
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+  profile               Profile?
+  settings              UserSetting?
+  interests             UserInterest[]
+  skills                UserSkill[]
+  goals                 UserGoal[]
+  savedCareers          SavedCareer[]
+  simulations           Simulation[]
+  activities            Activity[]
+  roadmap               RoadmapProgress[]
+  aiMessages            AIMessage[]
+  recommendationHistory RecommendationSnapshot[]
+  reports               ReportSnapshot[]
+
+  @@index([createdAt])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  birthDate String?
+  gender    String?
+  phone     String?
+  city      String?
+  school    String?
+  education String?
+  major     String?
+  grade     String?
+  bio       String?
+  readiness Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSetting {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  language           String   @default("vi")
+  timezone           String   @default("Asia/Bangkok")
+  units              String   @default("metric")
+  emailNotifications Boolean  @default(true)
+  appNotifications   Boolean  @default(true)
+  learningReminders  Boolean  @default(true)
+  newsletter         Boolean  @default(false)
+  darkMode           Boolean  @default(false)
+  accentColor        String   @default("purple")
+  profileVisibility  String   @default("private")
+  emailVisibility    String   @default("private")
+  phoneVisibility    String   @default("friends")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Career {
+  id              String                   @id @default(cuid())
+  slug            String                   @unique
+  title           String
+  category        String
+  description     String
+  salaryMin       Int
+  salaryMax       Int
+  demand          Int
+  creativity      Int
+  logic           Int
+  communication   Int
+  competition     Int                      @default(60)
+  tags            String
+  requiredSkills  String                   @default("")
+  workEnvironment String                   @default("Văn phòng / Hybrid")
+  roadmap         String
+  active          Boolean                  @default(true)
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+  simulations     Simulation[]
+  savedBy         SavedCareer[]
+  roadmapProgress RoadmapProgress[]
+  recommendation  RecommendationSnapshot[]
+
+  @@index([category, active])
+}
+
+model UserInterest {
+  id     String @id @default(cuid())
+  userId String
+  key    String
+  weight Int    @default(100)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+}
+
+model UserSkill {
+  id     String @id @default(cuid())
+  userId String
+  key    String
+  level  Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+}
+
+model UserGoal {
+  id      String  @id @default(cuid())
+  userId  String
+  key     String
+  horizon String?
+  detail  String?
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+}
+
+model SavedCareer {
+  id        String   @id @default(cuid())
+  userId    String
+  careerId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, careerId])
+  @@index([userId, createdAt])
+}
+
+model Simulation {
+  id        String   @id @default(cuid())
+  userId    String
+  careerId  String
+  score     Int
+  status    String   @default("completed")
+  minutes   Int      @default(45)
+  answers   Json?
+  feedback  String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([careerId])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  detail    String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  category    String
+  description String
+  content     String
+  minutes     Int
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, published])
+}
+
+model RoadmapProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  careerId    String
+  stage       Int
+  progress    Int       @default(0)
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  career      Career    @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, careerId, stage])
+  @@index([userId, updatedAt])
+}
+
+model AIMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  role      String
+  content   String   @db.Text
+  provider  String?
+  model     String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model RecommendationSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  careerId  String
+  score     Int
+  reasons   Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model ReportSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  readiness Int
+  summary   Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

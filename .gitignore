@@ -1,0 +1,15 @@
+node_modules
+.next
+.env
+.env.local
+.env.*.local
+!.env.example
+.next/
+node_modules/
+prisma/integration.db
+prisma/schema.integration.prisma
+prisma/integration.sql
+*.tsbuildinfo
+prisma/dev.db
+prisma/dev.db-journal
+.DS_Store

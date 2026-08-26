@@ -1,0 +1,25 @@
+substitutions:
+  _REGION: asia-southeast1
+  _SERVICE: careertwin
+  _REPOSITORY: careertwin
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}", "."]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --set-secrets=DATABASE_URL=careertwin-database-url:latest,SESSION_SECRET=careertwin-session-secret:latest,GEMINI_API_KEY=careertwin-gemini-api-key:latest
+      - --set-env-vars=GEMINI_MODEL=gemini-3.7-flash,GEMINI_FALLBACK_MODELS=gemini-3.6-flash\,gemini-2.5-flash
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}
