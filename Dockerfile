@@ -23,4 +23,5 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 EXPOSE 8080
-CMD ["sh", "-c", "npx prisma migrate deploy && HOSTNAME=0.0.0.0 node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node prisma/seed.ts && HOSTNAME=0.0.0.0 PORT=${PORT:-8080} node server.js"]
+

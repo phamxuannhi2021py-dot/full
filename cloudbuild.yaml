@@ -19,7 +19,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --set-secrets=DATABASE_URL=careertwin-database-url:latest,SESSION_SECRET=careertwin-session-secret:latest,GEMINI_API_KEY=careertwin-gemini-api-key:latest
-      - --set-env-vars=GEMINI_MODEL=gemini-3.7-flash,GEMINI_FALLBACK_MODELS=gemini-3.6-flash\,gemini-2.5-flash
+      - --set-env-vars=GEMINI_MODEL=gemini-3.7-flash,GEMINI_FALLBACK_MODELS=gemini-3.6-flash\,gemini-3.5-flash-lite
 
 images:
   - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:${SHORT_SHA}

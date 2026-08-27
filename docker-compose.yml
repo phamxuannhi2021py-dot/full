@@ -1,4 +1,21 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-careertwin}:${POSTGRES_PASSWORD:-careertwin}@db:5432/${POSTGRES_DB:-careertwin}?schema=public"
+      SESSION_SECRET: ${SESSION_SECRET:-replace-with-at-least-32-random-characters-secret}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.7-flash}
+      GEMINI_FALLBACK_MODELS: ${GEMINI_FALLBACK_MODELS:-gemini-3.6-flash,gemini-3.5-flash-lite}
+    depends_on:
+      db:
+        condition: service_healthy
+
   db:
     image: postgres:17-alpine
     restart: unless-stopped
@@ -18,3 +35,4 @@ services:
 
 volumes:
   careertwin_postgres:
+
