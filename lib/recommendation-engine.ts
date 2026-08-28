@@ -17,7 +17,9 @@ export type CareerLike = {
   logic: number;
   communication: number;
   tags: string;
+  requiredSkills?: string;
   roadmap: string;
+  skills?: { importance: number; skill: { key: string; name: string } }[];
 };
 
 export type ScoreBreakdown = {
@@ -50,9 +52,20 @@ function overlapScore(tags: string[], interests: string[]) {
   return clamp((hits / interests.length) * 100);
 }
 
+const normalize = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 function skillScore(career: CareerLike, skills: Record<string, number>) {
   const values: number[] = [];
   const tags = career.tags.split(',').map((item) => item.trim());
+  const normalizedUserSkills = new Map(Object.entries(skills).map(([key, value]) => [normalize(key), value]));
+  for (const careerSkill of career.skills ?? []) {
+    const direct = normalizedUserSkills.get(normalize(careerSkill.skill.key)) ?? normalizedUserSkills.get(normalize(careerSkill.skill.name));
+    if (direct != null) values.push(direct * (careerSkill.importance / 100));
+  }
+  for (const required of (career.requiredSkills ?? '').split(',').map((item) => item.trim()).filter(Boolean)) {
+    const found = [...normalizedUserSkills.entries()].find(([key]) => normalize(required).includes(key) || key.includes(normalize(required)));
+    if (found) values.push(found[1]);
+  }
   if (tags.some((tag) => ['coding', 'technology', 'ai', 'security'].includes(tag)) && skills.coding != null) values.push(skills.coding);
   if (tags.includes('design') && skills.design != null) values.push(skills.design);
   if (tags.some((tag) => ['analysis', 'data', 'logic', 'math'].includes(tag)) && skills.analysis != null) values.push(skills.analysis);
@@ -94,6 +107,25 @@ export function recommend(careers: CareerLike[], user: UserSignal) {
     .map((career) => {
       const { score, breakdown } = scoreCareerDetailed(career, user);
       return { ...career, match: score, breakdown };
+    })
+    .sort((left, right) => right.match - left.match || right.demand - left.demand);
+}
+
+export function recommendWithSimulation(
+  careers: CareerLike[],
+  user: UserSignal,
+  simulations: { careerId: string; score: number; createdAt?: Date | string }[] = [],
+) {
+  const latestByCareer = new Map<string, number>();
+  for (const simulation of simulations) {
+    if (!latestByCareer.has(simulation.careerId)) latestByCareer.set(simulation.careerId, simulation.score);
+  }
+  return recommend(careers, user)
+    .map((career) => {
+      const simulationScore = latestByCareer.get(career.id);
+      if (simulationScore == null) return career;
+      const boost = Math.round((simulationScore - 70) * 0.25);
+      return { ...career, match: clamp(career.match + boost), simulationScore };
     })
     .sort((left, right) => right.match - left.match || right.demand - left.demand);
 }

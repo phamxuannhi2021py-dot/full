@@ -36,6 +36,11 @@ export default function FigmaExploreClient() {
       <button className="figma-action" style={{left:875,top:26,width:284,height:42}} onClick={search} aria-label="Tìm kiếm"/>
       {categories.map((item)=><button key={item.key} className={`figma-choice ${category===item.key?'selected':''}`} style={{left:item.left,top:444,width:item.width,height:35,borderRadius:10}} onClick={()=>chooseCategory(item.key)} aria-label={item.label}/>)}
       {(careers.length?careers:[]).slice(0,5).map((career,index)=><button key={career.id} className="figma-action" style={{left:250+index*236,top:535,width:214,height:270}} onClick={()=>setSelected(career)} aria-label={`Xem ${career.title}`}/>)}
+      {careers.slice(0,5).map((career,index)=><div key={`career-text-${career.id}`} className="figma-dynamic-text" style={{left:268+index*236,top:704,width:178,height:76,fontSize:12,fontWeight:800,padding:'5px',lineHeight:1.25,overflow:'hidden'}}>
+        {career.title}
+        <small style={{display:'block',fontSize:10,color:'#6338ed',marginTop:3}}>{career.match}% phù hợp · {career.category}</small>
+        <small style={{display:'block',fontSize:9,color:'#69728e',fontWeight:500,marginTop:3}}>{career.salaryMin}-{career.salaryMax} triệu/tháng</small>
+      </div>)}
       <button className="figma-action" style={{left:327,top:260,width:170,height:44}} onClick={()=>setResultsOpen(true)} aria-label="Làm trắc nghiệm"/>
       <button className="figma-action" style={{left:1315,top:444,width:94,height:35}} onClick={()=>setResultsOpen(true)} aria-label="Bộ lọc"/>
       {loading&&<span className="figma-overlay-spinner" style={{left:1140,top:35,borderColor:'rgba(99,56,237,.25)',borderTopColor:'#6338ed'}}/>}

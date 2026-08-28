@@ -9,11 +9,13 @@ import type { CareerView } from './CareerDetailModal';
 
 type Question={id:string;text:string;low:string;high:string};
 type History={id:string;score:number;minutes:number;career:{title:string};createdAt:string;feedback?:string};
+type SimulationPayload={title:string;scenario:string;questions:Question[];history:History[]};
 
 export default function FigmaSimulationPageClient(){
   const params=useSearchParams();
   const [careers,setCareers]=useState<CareerView[]>([]);
   const [questions,setQuestions]=useState<Question[]>([]);
+  const [scenario,setScenario]=useState('');
   const [history,setHistory]=useState<History[]>([]);
   const [selected,setSelected]=useState<CareerView|null>(null);
   const [answers,setAnswers]=useState<Record<string,number>>({});
@@ -21,8 +23,21 @@ export default function FigmaSimulationPageClient(){
   const [running,setRunning]=useState(false);
   const [result,setResult]=useState<History|null>(null);
   const [status,setStatus]=useState<{error?:string;loading?:boolean}>({});
-  useEffect(()=>{Promise.all([fetch('/api/careers').then((r)=>r.json()),fetch('/api/simulation').then((r)=>r.json())]).then(([careerList,simulation])=>{setCareers(careerList);setQuestions(simulation.questions||[]);setHistory(simulation.history||[]);setAnswers(Object.fromEntries((simulation.questions||[]).map((q:Question)=>[q.id,70])));const slug=params.get('career');if(slug){const found=careerList.find((career:CareerView)=>career.slug===slug);if(found){setSelected(found);setRunning(true);}}}).catch(()=>setStatus({error:'Không thể tải dữ liệu mô phỏng'}));},[params]);
-  function start(career:CareerView){setSelected(career);setPicker(false);setRunning(true);setResult(null);}
+  async function loadSimulation(slug?:string){
+    const response=await fetch(`/api/simulation${slug?`?career=${encodeURIComponent(slug)}`:''}`);
+    if(!response.ok)throw new Error('Không thể tải dữ liệu mô phỏng');
+    const simulation:SimulationPayload=await response.json();
+    setQuestions(simulation.questions||[]);
+    setScenario(simulation.scenario||'');
+    setHistory(simulation.history||[]);
+    setAnswers(Object.fromEntries((simulation.questions||[]).map((q:Question)=>[q.id,70])));
+  }
+  useEffect(()=>{Promise.all([fetch('/api/careers').then((r)=>r.json()),loadSimulation(params.get('career')||undefined)]).then(([careerList])=>{setCareers(careerList);const slug=params.get('career');if(slug){const found=careerList.find((career:CareerView)=>career.slug===slug);if(found){setSelected(found);setRunning(true);}}}).catch(()=>setStatus({error:'Không thể tải dữ liệu mô phỏng'}));},[params]);
+  async function start(career:CareerView){
+    setStatus({loading:true});
+    try{await loadSimulation(career.slug);setSelected(career);setPicker(false);setRunning(true);setResult(null);setStatus({});}
+    catch(error){setStatus({error:error instanceof Error?error.message:'Không thể tải mô phỏng'});}
+  }
   async function submit(){if(!selected)return;setStatus({loading:true});
     try{const response=await fetch('/api/simulation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({careerId:selected.id,minutes:45,answers:questions.map((question)=>({questionId:question.id,value:answers[question.id]||0}))})});const payload=await response.json();if(!response.ok)throw new Error(payload.error||'Không thể lưu kết quả');setResult(payload);setHistory((current)=>[payload,...current]);setRunning(false);setStatus({});}
     catch(error){setStatus({error:error instanceof Error?error.message:'Không thể lưu kết quả'});}
@@ -41,7 +56,7 @@ export default function FigmaSimulationPageClient(){
       <div className="ct-career-list">{careers.map((career)=><button type="button" className="ct-career-option" key={career.id} onClick={()=>start(career)}><strong>{career.title}</strong><small>{career.description}</small><small>Khoảng 45 phút · phù hợp {career.match}%</small></button>)}</div>
     </FigmaModal>
     <FigmaModal open={running} title={`Mô phỏng · ${selected?.title||''}`} onClose={()=>setRunning(false)} wide>
-      <p>Đánh giá cách bạn xử lý các tình huống công việc. Điểm được tính trên câu trả lời, không sinh ngẫu nhiên.</p>
+      <p>{scenario||'Đánh giá cách bạn xử lý các tình huống công việc. Điểm được tính trên câu trả lời, không sinh ngẫu nhiên.'}</p>
       {questions.map((question)=><div className="ct-question" key={question.id}><p>{question.text}</p><input type="range" min="0" max="100" step="10" value={answers[question.id]||0} onChange={(event)=>setAnswers({...answers,[question.id]:Number(event.target.value)})}/><div className="ct-question-labels"><span>{question.low}</span><span>{question.high}</span></div></div>)}
       <InlineStatus error={status.error}/><div className="ct-actions"><button className="ct-secondary" type="button" onClick={()=>setRunning(false)}>Để sau</button><button className="ct-primary" type="button" onClick={submit} disabled={status.loading}>{status.loading?'Đang chấm điểm…':'Hoàn thành mô phỏng'}</button></div>
     </FigmaModal>

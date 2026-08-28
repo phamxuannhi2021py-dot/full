@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getUserId } from '@/lib/session';
+import { createSession, getUserId } from '@/lib/session';
 import { calculateReadiness } from '@/lib/user-signal';
 import { errorResponse, handleApiError, parseBody } from '@/lib/api';
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const userId = await getUserId();
     if (!userId) return errorResponse('Unauthorized', 401);
     const input = await parseBody(request, schema);
-    await db.$transaction(async (tx) => {
+    const sessionState = await db.$transaction(async (tx) => {
       if (input.basic) {
         await tx.user.update({ where: { id: userId }, data: { name: input.basic.name, role: input.basic.role } });
         await tx.profile.upsert({
@@ -62,6 +62,15 @@ export async function POST(request: Request) {
       await tx.activity.create({
         data: { userId, type: 'onboarding', title: 'Cập nhật hồ sơ định hướng', detail: 'CareerTwin đã lưu dữ liệu cá nhân hóa' },
       });
+      return tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true, onboardingCompletedAt: true, tokenVersion: true },
+      });
+    });
+    await createSession({
+      userId: sessionState.id,
+      onboardingCompleted: Boolean(sessionState.onboardingCompletedAt),
+      tokenVersion: sessionState.tokenVersion,
     });
     return Response.json({ ok: true });
   } catch (error) {

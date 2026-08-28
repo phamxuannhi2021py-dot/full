@@ -14,6 +14,7 @@ model User {
   email                 String                   @unique
   passwordHash          String
   role                  String                   @default("student")
+  tokenVersion          Int                      @default(0)
   onboardingCompletedAt DateTime?
   createdAt             DateTime                 @default(now())
   updatedAt             DateTime                 @updatedAt
@@ -95,8 +96,238 @@ model Career {
   savedBy         SavedCareer[]
   roadmapProgress RoadmapProgress[]
   recommendation  RecommendationSnapshot[]
+  skills          CareerSkill[]
+  tasks           CareerTask[]
+  knowledge       CareerKnowledge[]
+  abilities       CareerAbility[]
+  interests       CareerInterest[]
+  workActivities  CareerWorkActivity[]
+  workContexts    CareerWorkContext[]
+  tools           CareerTool[]
+  marketData      CareerMarketData?
+  learningPaths   CareerLearningPath[]
+  relatedFrom     CareerRelatedCareer[]     @relation("RelatedCareerFrom")
+  relatedTo       CareerRelatedCareer[]     @relation("RelatedCareerTo")
+  resources       CareerResource[]
+  simulationDefinitions SimulationDefinition[]
 
   @@index([category, active])
+}
+
+model Skill {
+  id          String        @id @default(cuid())
+  key         String        @unique
+  name        String
+  description String?
+  source      String        @default("careertwin")
+  escoUri     String?       @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  careers     CareerSkill[]
+
+  @@index([source])
+}
+
+model CareerSkill {
+  id         String   @id @default(cuid())
+  careerId   String
+  skillId    String
+  importance Int      @default(60)
+  level      Int?
+  source     String   @default("careertwin")
+  createdAt  DateTime @default(now())
+  career     Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, skillId])
+  @@index([skillId])
+  @@index([careerId, importance])
+}
+
+model CareerTask {
+  id        String   @id @default(cuid())
+  careerId  String
+  title     String
+  detail    String?
+  source    String   @default("careertwin")
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@index([careerId, order])
+}
+
+model CareerKnowledge {
+  id        String   @id @default(cuid())
+  careerId  String
+  name      String
+  detail    String?
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, name])
+}
+
+model CareerAbility {
+  id         String   @id @default(cuid())
+  careerId   String
+  name       String
+  importance Int      @default(60)
+  source     String   @default("careertwin")
+  createdAt  DateTime @default(now())
+  career     Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, name])
+}
+
+model CareerInterest {
+  id        String   @id @default(cuid())
+  careerId  String
+  key       String
+  weight    Int      @default(60)
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, key])
+  @@index([key])
+}
+
+model CareerWorkActivity {
+  id        String   @id @default(cuid())
+  careerId  String
+  name      String
+  detail    String?
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, name])
+}
+
+model CareerWorkContext {
+  id        String   @id @default(cuid())
+  careerId  String
+  name      String
+  value     String?
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, name])
+}
+
+model CareerTool {
+  id        String   @id @default(cuid())
+  careerId  String
+  name      String
+  category  String?
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, name])
+}
+
+model CareerMarketData {
+  id                String   @id @default(cuid())
+  careerId          String   @unique
+  country           String   @default("VN")
+  localTitle        String?
+  salaryMin         Int?
+  salaryMax         Int?
+  demand            Int?
+  industriesHiring  Json?
+  educationRoutes   Json?
+  certifications    Json?
+  source            String   @default("careertwin")
+  updatedAt         DateTime @updatedAt
+  career            Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+}
+
+model CareerLearningPath {
+  id        String   @id @default(cuid())
+  careerId  String
+  level     String
+  title     String
+  skills    Json
+  tasks     Json
+  projects  Json
+  resources Json?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, level, order])
+  @@index([careerId, order])
+}
+
+model CareerResource {
+  id        String   @id @default(cuid())
+  careerId  String
+  title     String
+  url       String?
+  type      String
+  level     String?
+  source    String   @default("careertwin")
+  createdAt DateTime @default(now())
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@index([careerId, type])
+}
+
+model CareerRelatedCareer {
+  id              String   @id @default(cuid())
+  careerId        String
+  relatedCareerId String
+  reason          String?
+  strength        Int      @default(60)
+  source          String   @default("careertwin")
+  career          Career   @relation("RelatedCareerFrom", fields: [careerId], references: [id], onDelete: Cascade)
+  relatedCareer   Career   @relation("RelatedCareerTo", fields: [relatedCareerId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, relatedCareerId])
+  @@index([relatedCareerId])
+}
+
+model SimulationDefinition {
+  id        String           @id @default(cuid())
+  careerId  String
+  title     String
+  role      String
+  workplace String
+  mission   String
+  scenario  String           @db.Text
+  level     String           @default("template")
+  duration  Int              @default(45)
+  objectives Json
+  artifacts  Json
+  evaluationDimensions Json
+  source     String          @default("careertwin")
+  active     Boolean         @default(true)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  career     Career          @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  tasks      SimulationTask[]
+
+  @@index([careerId, active])
+}
+
+model SimulationTask {
+  id           String               @id @default(cuid())
+  definitionId String
+  step         Int
+  type         String
+  prompt       String               @db.Text
+  artifacts    Json?
+  options      Json
+  scoringSignals Json
+  branches     Json?
+  definition   SimulationDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, step])
 }
 
 model UserInterest {

@@ -28,6 +28,11 @@ export default function FigmaReportsClient(){
         <div className="figma-dynamic-text" style={{left:1134,top:179,width:95,height:52,fontSize:32,color:'#5130dc',fontWeight:800,padding:'3px'}}>{report.readiness}<span style={{fontSize:16,color:'#566080'}}> /100</span></div>
         {[[report.exploredCareers,322],[report.completedSimulations,616],[report.evaluatedSkills,890],[`${report.readiness}%`,1200]].map(([value,left])=><div key={String(left)} className="figma-dynamic-text" style={{left:Number(left),top:369,width:80,height:34,fontSize:16,fontWeight:800,padding:'4px'}}>{value}</div>)}
         {(report.recommendations||[]).slice(0,5).map((career,index)=><button key={career.id} className="figma-action" style={{left:1070,top:488+index*48,width:310,height:45}} onClick={()=>setSelected(career)} aria-label={career.title}/>)}
+        {(report.recommendations||[]).slice(0,5).map((career,index)=><div key={`report-rec-${career.id}`} className="figma-dynamic-text" style={{left:1076,top:488+index*48,width:298,height:42,fontSize:11,fontWeight:800,padding:'3px 5px',lineHeight:1.25,overflow:'hidden'}}>
+          {career.title}
+          <small style={{display:'block',fontSize:9,color:'#6338ed'}}>{career.match}% phù hợp · {career.category}</small>
+        </div>)}
+        {(report.strengths||[]).slice(0,3).map((skill,index)=><div key={`strength-${skill.key}`} className="figma-dynamic-text" style={{left:322,top:529+index*43,width:235,height:32,fontSize:11,fontWeight:700,padding:'4px 6px',overflow:'hidden'}}>{skill.key}: {skill.score}%</div>)}
       </>}
       <button className="figma-action" style={{left:1144,top:914,width:220,height:34}} onClick={()=>setOpen(true)} aria-label="Xem lộ trình đề xuất"/>
       <button className="figma-action" style={{left:1144,top:951,width:220,height:29}} onClick={printReport} aria-label="Tải báo cáo PDF"/>

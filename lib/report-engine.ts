@@ -1,5 +1,5 @@
 import type { Career, Profile, Simulation, UserSkill } from '@prisma/client';
-import { recommend, type UserSignal } from './recommendation-engine';
+import { recommendWithSimulation, type CareerLike, type UserSignal } from './recommendation-engine';
 import { calculateReadiness } from './user-signal';
 
 export function buildCareerReport(input: {
@@ -8,10 +8,10 @@ export function buildCareerReport(input: {
   skills: UserSkill[];
   goals: unknown[];
   simulations: (Simulation & { career: Career })[];
-  careers: Career[];
+  careers: CareerLike[];
   signal: UserSignal;
 }) {
-  const ranked = recommend(input.careers, input.signal).slice(0, 5);
+  const ranked = recommendWithSimulation(input.careers, input.signal, input.simulations.map((item) => ({ careerId: item.careerId, score: item.score, createdAt: item.createdAt }))).slice(0, 5);
   const readiness = calculateReadiness(input);
   const skillValues = input.skills.map((item) => item.level);
   const averageSkill = skillValues.length

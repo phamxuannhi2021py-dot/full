@@ -7,7 +7,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
@@ -17,6 +17,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "node prisma/seed.ts",
+    "import:esco": "node scripts/import-esco.ts",
+    "import:onet": "node scripts/import-onet.ts",
     "ai:test": "node --env-file=.env scripts/test-ai-models.mjs",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "fetch:figma": "node scripts/fetch-figma-frames.mjs",
@@ -25,17 +27,17 @@
   },
   "dependencies": {
     "@prisma/client": "^6.12.0",
-    "bcryptjs": "latest",
-    "jose": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "zod": "latest"
+    "bcryptjs": "^3.0.3",
+    "jose": "^6.2.10",
+    "next": "^16.3.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
+    "@types/node": "^26.4.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
     "prisma": "^6.12.0",
     "typescript": "latest"
   },

@@ -8,10 +8,13 @@ import { FigmaModal, InlineStatus } from './FigmaModal';
 import { CareerDetailModal, type CareerView } from './CareerDetailModal';
 
 type DashboardData = {
-  user:{name:string;email:string;role:string};
+  user:{name:string;email:string;role:string;onboardingCompleted:boolean};
   readiness:number;
   recommendations:CareerView[];
   activities:{id:string;title:string;detail?:string;createdAt:string}[];
+  savedCareers:CareerView[];
+  simulations:{id:string;score:number;career:{title:string};createdAt:string}[];
+  stats:{simulations:number;savedCareers:number;roadmapStages:number;latestReportAt?:string|null};
 };
 
 export default function FigmaDashboardClient() {
@@ -41,6 +44,11 @@ export default function FigmaDashboardClient() {
       {data && <>
         <div className="figma-dynamic-text" style={{left:1278,top:31,width:100,height:32,fontSize:11,fontWeight:700,padding:'2px 0'}}>{data.user.name}<small style={{display:'block',fontSize:8,color:'#69728e'}}>CareerTwin User</small></div>
         <div className="figma-dynamic-text" style={{left:1353,top:145,width:45,height:28,fontSize:12,color:'#6338ed',fontWeight:800,padding:'5px'}}>{data.readiness}%</div>
+        <div className="figma-dynamic-text" style={{left:329,top:306,width:74,height:30,fontSize:18,fontWeight:800,padding:'2px',textAlign:'center'}}>{data.recommendations.length}</div>
+        <div className="figma-dynamic-text" style={{left:585,top:306,width:74,height:30,fontSize:18,fontWeight:800,padding:'2px',textAlign:'center'}}>{data.stats.simulations}</div>
+        <div className="figma-dynamic-text" style={{left:840,top:306,width:74,height:30,fontSize:18,fontWeight:800,padding:'2px',textAlign:'center'}}>{data.stats.savedCareers}</div>
+        {data.recommendations.slice(0,3).map((career,index)=><div key={`rec-${career.id}`} className="figma-dynamic-text" style={{left:282+index*248,top:787,width:180,height:45,fontSize:11,fontWeight:800,padding:'3px 5px',lineHeight:1.25,overflow:'hidden'}}>{career.title}<small style={{display:'block',fontSize:10,color:'#6338ed'}}>{career.match}% phù hợp</small></div>)}
+        {(data.activities.length?data.activities:[{id:'empty',title:'Chưa có hoạt động',detail:'Hoàn thành onboarding để bắt đầu',createdAt:''}]).slice(0,4).map((activity,index)=><div key={activity.id} className="figma-dynamic-text" style={{left:1056,top:367+index*62,width:290,height:42,fontSize:11,fontWeight:700,padding:'2px 4px',lineHeight:1.3,overflow:'hidden'}}>{activity.title}<small style={{display:'block',fontSize:9,color:'#69728e',fontWeight:500}}>{activity.detail||'Dữ liệu được lưu từ hành động thật'}</small></div>)}
       </>}
       <button className="figma-action" style={{left:1225,top:20,width:180,height:55}} onClick={()=>setAccountOpen(true)} aria-label="Mở tài khoản"/>
       <input className="figma-input-overlay" style={{left:1084,top:693,width:250,height:27}} value={question} onChange={(event)=>setQuestion(event.target.value)} onKeyDown={(event)=>{if(event.key==='Enter')ask();}} placeholder="Nhập câu hỏi của bạn..." aria-label="Hỏi CareerTwin AI"/>

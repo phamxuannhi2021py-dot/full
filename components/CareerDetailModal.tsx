@@ -9,6 +9,10 @@ export type CareerView = {
   communication:number; competition?:number; tags:string; requiredSkills?:string;
   workEnvironment?:string; roadmap:string; match?:number; saved?:boolean;
   breakdown?:{interest:number;skill:number;goal:number;aptitude:number};
+  tasks?:{id:string;title:string;detail?:string|null}[];
+  tools?:{id:string;name:string;category?:string|null}[];
+  skillGap?:{key:string;name:string;current:number;target:number;status:string;priority:number}[];
+  learningSequence?:{order:number;skill:string;reason:string;project:string}[];
 };
 
 export function CareerDetailModal({ career, onClose, onSaved }: {
@@ -42,6 +46,18 @@ export function CareerDetailModal({ career, onClose, onSaved }: {
     </div>
     <h3>Kỹ năng cần thiết</h3>
     <p>{(activeCareer.requiredSkills||activeCareer.tags).split(',').join(' · ')}</p>
+    {Boolean(activeCareer.skillGap?.length)&&<>
+      <h3>Skill gap cá nhân hóa</h3>
+      <div className="ct-report-list">{activeCareer.skillGap?.slice(0,5).map((gap)=><div className="ct-report-row" key={gap.key}><span>{gap.name} · {gap.status}</span><b>{gap.current}/{gap.target}</b></div>)}</div>
+    </>}
+    {Boolean(activeCareer.tasks?.length)&&<>
+      <h3>Nhiệm vụ thực tế</h3>
+      <div className="ct-report-list">{activeCareer.tasks?.slice(0,5).map((task,index)=><div className="ct-report-row" key={task.id}><span>{index+1}. {task.title}</span><b>Task</b></div>)}</div>
+    </>}
+    {Boolean(activeCareer.learningSequence?.length)&&<>
+      <h3>Nên học tiếp</h3>
+      <div className="ct-report-list">{activeCareer.learningSequence?.slice(0,4).map((item)=><div className="ct-report-row" key={item.order}><span>{item.order}. {item.skill}</span><b>Priority</b></div>)}</div>
+    </>}
     <h3>Lộ trình gợi ý</h3>
     <div className="ct-report-list">{activeCareer.roadmap.split('|').map((stage,index)=><div className="ct-report-row" key={stage}><span>{index+1}. {stage}</span><b>{index===0?'Bắt đầu':'Tiếp theo'}</b></div>)}</div>
     <div className="ct-actions">

@@ -35,7 +35,11 @@ export async function POST(request: Request) {
         activities: { create: { type: 'auth', title: 'Tạo tài khoản', detail: 'Bắt đầu hành trình với CareerTwin' } },
       },
     });
-    await createSession(user.id);
+    await createSession({
+      userId: user.id,
+      onboardingCompleted: false,
+      tokenVersion: user.tokenVersion,
+    });
     return Response.json({ ok: true, user: { id: user.id, name: user.name, email: user.email } }, { status: 201 });
   } catch (error) {
     return handleApiError(error);

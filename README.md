@@ -35,7 +35,7 @@ Next.js 16 App Router
 ## Requirements
 
 - Node.js 24+
-- PostgreSQL 15+ (PostgreSQL 17 is used in `docker-compose.yml`)
+- A Supabase PostgreSQL project (or another hosted PostgreSQL provider)
 - A Gemini API key for external AI. The site remains functional without one.
 
 ## Environment
@@ -45,6 +45,7 @@ Copy `.env.example` to `.env` and configure:
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `DIRECT_URL` | Yes | Direct/session connection used by Prisma migrations |
 | `SESSION_SECRET` | Yes | At least 32 random characters |
 | `GEMINI_API_KEY` | Production AI | Gemini API key |
 | `GEMINI_MODEL` | No | Primary model; default `gemini-3.6-flash` |
@@ -56,17 +57,22 @@ Never commit a real `.env` file.
 
 ## Run locally
 
-With Docker:
+For local development, use Supabase directly (Docker is only for validating the final Cloud Run container):
 
 ```bash
-docker compose up -d db
 npm install
 npm run db:deploy
 npm run db:seed
 npm run dev
 ```
 
-Without Docker, create a PostgreSQL database in Cloud SQL, Neon, Supabase or another provider, place its connection string in `DATABASE_URL`, then run the same migration and seed commands.
+Set `DATABASE_URL` to Supabase's transaction-mode pooler (port `6543`, with `pgbouncer=true`) and `DIRECT_URL` to its session-mode pooler (port `5432`). URL-encode reserved password characters; for example, `@` becomes `%40`.
+
+To validate the final container locally before submission:
+
+```bash
+docker compose up --build
+```
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -113,6 +119,7 @@ The initial PostgreSQL migration is in `prisma/migrations/20260826000000_init`.
 1. Create an Artifact Registry repository named `careertwin`.
 2. Store values in Secret Manager using these secret names:
    - `careertwin-database-url`
+   - `careertwin-direct-url`
    - `careertwin-session-secret`
    - `careertwin-gemini-api-key`
 3. Grant the Cloud Run runtime service account Secret Manager access.

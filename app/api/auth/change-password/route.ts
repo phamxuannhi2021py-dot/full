@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getUserId } from '@/lib/session';
+import { createSession, getUserId } from '@/lib/session';
 import { errorResponse, handleApiError, parseBody } from '@/lib/api';
 
 const schema = z.object({
@@ -18,7 +18,16 @@ export async function POST(request: Request) {
     if (!(await bcrypt.compare(input.currentPassword, user.passwordHash))) {
       return errorResponse('Mật khẩu hiện tại không đúng', 400);
     }
-    await db.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(input.newPassword, 12) } });
+    const updatedUser = await db.user.update({
+      where: { id: userId },
+      data: { passwordHash: await bcrypt.hash(input.newPassword, 12), tokenVersion: { increment: 1 } },
+      select: { id: true, onboardingCompletedAt: true, tokenVersion: true },
+    });
+    await createSession({
+      userId: updatedUser.id,
+      onboardingCompleted: Boolean(updatedUser.onboardingCompletedAt),
+      tokenVersion: updatedUser.tokenVersion,
+    });
     await db.activity.create({ data: { userId, type: 'security', title: 'Đổi mật khẩu' } });
     return Response.json({ ok: true });
   } catch (error) {

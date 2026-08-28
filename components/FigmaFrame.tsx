@@ -32,9 +32,9 @@ export default function FigmaFrame({ frame, hotspots = [], desktopNav = false, c
 
   useEffect(()=>{
     const update = () => {
-      // Keep the approved canvas intact. On phones, preserve a readable
-      // minimum visual width and let the viewport scroll horizontally.
-      const targetWidth = window.innerWidth < 700 ? Math.max(window.innerWidth, 1024) : window.innerWidth;
+      // Keep the approved Figma canvas intact, but fit it to the actual
+      // device width so all overlays remain reachable on small screens.
+      const targetWidth = window.innerWidth;
       setScale(Math.min(1, targetWidth / frame.width));
     };
     update();

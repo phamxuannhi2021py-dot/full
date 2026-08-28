@@ -4,31 +4,72 @@ import { jwtVerify } from 'jose';
 const publicPages = new Set(['/login', '/register']);
 const publicApi = new Set(['/api/auth/login', '/api/auth/register', '/api/health']);
 
-async function isAuthenticated(request: NextRequest) {
+function isPublicApiRequest(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  if (publicApi.has(pathname)) return true;
+
+  if (request.method === 'GET') {
+    return (
+      pathname === '/api/careers' ||
+      /^\/api\/careers\/[^/]+$/.test(pathname) ||
+      pathname === '/api/articles'
+    );
+  }
+
+  return false;
+}
+
+interface SessionPayload {
+  type: string;
+  userId: string;
+  onboardingCompleted: boolean;
+  tokenVersion: number;
+}
+
+async function getUserSessionPayload(request: NextRequest): Promise<SessionPayload | null> {
   const token = request.cookies.get('careertwin_session')?.value;
-  if (!token) return false;
+  if (!token) return null;
   const secret = new TextEncoder().encode(process.env.SESSION_SECRET || 'careertwin-local-development-secret-change-me');
   try {
     const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'], typ: 'JWT' });
-    return payload.type === 'session' && typeof payload.userId === 'string';
+    if (
+      payload.type === 'session' &&
+      typeof payload.userId === 'string' &&
+      typeof payload.onboardingCompleted === 'boolean' &&
+      typeof payload.tokenVersion === 'number'
+    ) {
+      return payload as unknown as SessionPayload;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 }
 
 export async function proxy(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  const authenticated = await isAuthenticated(request);
-  if ((publicPages.has(pathname) || publicApi.has(pathname)) && authenticated && publicPages.has(pathname)) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+  const { pathname, search } = request.nextUrl;
+  const session = await getUserSessionPayload(request);
+  const authenticated = Boolean(session);
+
+  if (authenticated && publicPages.has(pathname)) {
+    const targetPath = session?.onboardingCompleted ? '/dashboard' : '/onboarding/basic';
+    return NextResponse.redirect(new URL(targetPath, request.url));
   }
-  const isPublic = pathname === '/' || publicPages.has(pathname) || publicApi.has(pathname);
+
+  const isPublic = pathname === '/' || publicPages.has(pathname) || isPublicApiRequest(request);
+  
   if (!isPublic && !authenticated) {
-    if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // Ensure search params are included properly for login redirect
+    const fullTargetUrl = pathname + search;
     const login = new URL('/login', request.url);
-    login.searchParams.set('next', pathname);
+    login.searchParams.set('next', fullTargetUrl);
     return NextResponse.redirect(login);
   }
+
   return NextResponse.next();
 }
 

@@ -4,13 +4,21 @@ import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import FigmaFrame from './FigmaFrame';
+import { safeNextPath } from '@/lib/auth-redirect';
 import { frames } from '@/lib/figmaFrames';
 import { FigmaModal, InlineStatus } from './FigmaModal';
 
 async function postJSON(url: string, body: unknown) {
   const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error || 'Không thể thực hiện yêu cầu');
+  if (!response.ok) {
+  const detail =
+    Array.isArray(payload.details) && payload.details.length > 0
+      ? payload.details[0]?.message
+      : null;
+
+  throw new Error(detail || payload.error || 'Không thể thực hiện yêu cầu');
+}
   return payload;
 }
 
@@ -27,8 +35,8 @@ export function FigmaLogin() {
     setError(''); setLoading(true);
     try {
       const result = await postJSON('/api/auth/login', { email, password });
-      const requested = params.get('next');
-      const destination = requested?.startsWith('/') ? requested : result.user?.onboardingCompleted ? '/dashboard' : '/onboarding/basic';
+      const requested = safeNextPath(params.get('next'), window.location.origin);
+      const destination = requested ?? (result.user?.onboardingCompleted ? '/dashboard' : '/onboarding/basic');
       router.push(destination);
       router.refresh();
     } catch (caught) {

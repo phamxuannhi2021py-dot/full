@@ -13,22 +13,47 @@ const schema = z.object({
 });
 
 export async function GET(request: Request) {
-  const user = await currentUser();
-  if (!user) return errorResponse('Unauthorized', 401);
-  const careerId = new URL(request.url).searchParams.get('careerId');
-  const careers = await db.career.findMany({ where: { active: true } });
-  const selected = careerId
-    ? careers.find((item) => item.id === careerId)
-    : recommend(careers, toUserSignal(user))[0];
-  if (!selected) return errorResponse('Không tìm thấy nghề nghiệp', 404);
-  const progress = await db.roadmapProgress.findMany({ where: { userId: user.id, careerId: selected.id }, orderBy: { stage: 'asc' } });
-  return Response.json({
-    career: selected,
-    stages: selected.roadmap.split('|').map((title, index) => {
-      const saved = progress.find((item) => item.stage === index + 1);
-      return { stage: index + 1, title, progress: saved?.progress ?? 0, completedAt: saved?.completedAt ?? null };
-    }),
-  });
+  try {
+    const user = await currentUser();
+    if (!user) return errorResponse('Unauthorized', 401);
+    const careerId = new URL(request.url).searchParams.get('careerId');
+    const careers = await db.career.findMany({ where: { active: true } });
+    const recommendedId = recommend(careers, toUserSignal(user))[0]?.id;
+    const selected = careerId
+      ? careers.find((item) => item.id === careerId)
+      : careers.find((item) => item.id === recommendedId);
+    if (!selected) return errorResponse('Không tìm thấy nghề nghiệp', 404);
+    const [progress, latestSimulation] = await Promise.all([
+      db.roadmapProgress.findMany({ where: { userId: user.id, careerId: selected.id }, orderBy: { stage: 'asc' } }),
+      db.simulation.findFirst({ where: { userId: user.id, careerId: selected.id }, orderBy: { createdAt: 'desc' } }),
+    ]);
+    const skillMap = new Map(user.skills.map((skill) => [skill.key, skill.level]));
+    const requiredSkills = selected.requiredSkills.split(',').map((skill: string) => skill.trim()).filter(Boolean);
+    const weakSkills = requiredSkills.filter((skill) => {
+      const key = skill.toLowerCase();
+      const matched = [...skillMap.entries()].find(([userSkill]) => key.includes(userSkill) || userSkill.includes(key));
+      return !matched || matched[1] < 70;
+    });
+    return Response.json({
+      career: selected,
+      personalized: {
+        weakSkills: weakSkills.slice(0, 3),
+        latestSimulationScore: latestSimulation?.score ?? null,
+        focus: weakSkills[0] ?? (latestSimulation && latestSimulation.score < 75 ? 'luyện mô phỏng thực tế' : selected.category),
+      },
+      stages: selected.roadmap.split('|').map((title, index) => {
+        const saved = progress.find((item) => item.stage === index + 1);
+        const note = index < weakSkills.length
+          ? `Ưu tiên bù kỹ năng: ${weakSkills[index]}`
+          : latestSimulation && latestSimulation.score < 75 && index === 0
+            ? 'Ôn lại tình huống mô phỏng gần nhất'
+            : null;
+        return { stage: index + 1, title, note, progress: saved?.progress ?? 0, completedAt: saved?.completedAt ?? null };
+      }),
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function PATCH(request: Request) {

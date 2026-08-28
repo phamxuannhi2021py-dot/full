@@ -29,38 +29,133 @@ const articles = [
   { slug:'future-careers', title:'Những ngành nghề hot trong 5 năm tới', category:'Hướng nghiệp', description:'Các nhóm nghề có nhu cầu tăng nhờ công nghệ và chuyển đổi xanh.', minutes:8, featured:false, content:'Dữ liệu, AI, an ninh mạng, y tế số, sản phẩm số và công nghệ xanh tiếp tục có nhu cầu. Tuy nhiên, nên chọn dựa trên mức độ phù hợp cá nhân thay vì chỉ chạy theo xu hướng.' },
 ] as const;
 
+const broadCareers = [
+  ['hr-recruiter','HR Recruiter','Nhân sự','Tuyển dụng, sàng lọc CV, phỏng vấn và phối hợp với hiring manager.',12,25,82,62,70,92,58,'business,people,communication,analysis,hr','Sourcing,Interviewing,Communication,ATS,Employer Branding','Văn phòng / Hybrid','Nền tảng nhân sự|Sourcing ứng viên|Phỏng vấn cấu trúc|Đánh giá năng lực|Employer branding|Talent partner'],
+  ['teacher','Giáo viên','Giáo dục','Thiết kế bài học, hỗ trợ học sinh và đánh giá tiến bộ học tập.',10,24,78,84,68,96,42,'education,people,communication,empathy','Lesson Planning,Classroom Management,Assessment,Communication','Trường học / Trung tâm','Tâm lý học giáo dục|Thiết kế bài giảng|Quản lý lớp học|Đánh giá học sinh|Công nghệ giáo dục|Lead teacher'],
+  ['financial-analyst','Financial Analyst','Tài chính','Phân tích dữ liệu tài chính, dự báo và hỗ trợ quyết định đầu tư/kinh doanh.',18,40,86,45,94,72,63,'finance,business,analysis,logic,data','Excel,Financial Modeling,Accounting,Power BI,Communication','Văn phòng / Hybrid','Kế toán nền tảng|Excel tài chính|Mô hình tài chính|Phân tích ngành|Dashboard|FP&A'],
+  ['accountant','Kế toán viên','Kế toán','Ghi nhận, kiểm tra và báo cáo dữ liệu tài chính theo chuẩn kế toán.',12,28,80,35,88,66,50,'finance,accounting,logic,attention','Accounting,Excel,Tax,ERP,Attention to Detail','Văn phòng','Nguyên lý kế toán|Thuế|Excel/ERP|Báo cáo tài chính|Kiểm soát nội bộ|Chief accountant'],
+  ['sales-executive','Sales Executive','Kinh doanh','Tìm kiếm khách hàng, tư vấn giải pháp, đàm phán và chốt hợp đồng.',12,35,88,74,62,98,70,'business,sales,communication,people','Prospecting,Negotiation,CRM,Presentation,Customer Insight','Văn phòng / Di chuyển','Sales basics|CRM|Discovery call|Negotiation|Account planning|Sales manager'],
+  ['ecommerce-specialist','E-commerce Specialist','Thương mại điện tử','Quản lý gian hàng, chiến dịch bán hàng, dữ liệu vận hành và tăng trưởng online.',14,32,90,76,78,82,66,'business,marketing,data,ecommerce','Marketplace,Ads,Analytics,Merchandising,Operations','Văn phòng / Hybrid','Marketplace basics|Listing optimization|Ads|Data analysis|Promotion planning|E-commerce lead'],
+  ['psychologist','Chuyên viên Tâm lý','Tâm lý','Đánh giá, tham vấn và hỗ trợ sức khỏe tinh thần trong phạm vi chuyên môn.',14,35,76,72,76,96,44,'science,people,communication,empathy','Counseling,Assessment,Ethics,Communication,Research','Phòng tư vấn / Trung tâm','Tâm lý học nền tảng|Kỹ năng tham vấn|Đánh giá|Đạo đức nghề|Thực hành giám sát|Chuyên gia'],
+  ['pharmacist','Dược sĩ','Y tế','Tư vấn sử dụng thuốc, quản lý dược phẩm và đảm bảo an toàn cho người bệnh.',14,32,79,38,88,76,48,'healthcare,science,communication,attention','Pharmacology,Patient Counseling,Regulation,Inventory','Nhà thuốc / Bệnh viện','Dược lý|Tư vấn thuốc|Quy định ngành|Quản lý kho|Dược lâm sàng|Quản lý dược'],
+  ['lawyer','Luật sư','Luật','Nghiên cứu pháp lý, tư vấn, soạn thảo hồ sơ và bảo vệ quyền lợi khách hàng.',18,55,77,58,95,96,80,'law,business,logic,communication','Legal Research,Writing,Negotiation,Ethics,Argumentation','Văn phòng / Tòa án','Pháp luật nền tảng|Nghiên cứu án lệ|Soạn thảo|Tranh tụng/tư vấn|Chuyên môn hóa|Partner'],
+  ['civil-engineer','Kỹ sư Xây dựng','Kỹ thuật','Thiết kế, giám sát và quản lý chất lượng công trình xây dựng.',15,38,84,50,92,74,54,'engineering,construction,logic,project','Structural Basics,AutoCAD,Project Management,Site Supervision','Công trường / Văn phòng','Cơ học công trình|AutoCAD/BIM|Đọc bản vẽ|Giám sát|Quản lý dự án|Chủ nhiệm kỹ thuật'],
+  ['mechanical-engineer','Kỹ sư Cơ khí','Kỹ thuật','Thiết kế, cải tiến và vận hành hệ thống cơ khí trong sản xuất.',15,36,82,58,91,65,50,'engineering,manufacturing,logic,problem-solving','CAD,Mechanics,Manufacturing,Maintenance,Quality','Nhà máy / Văn phòng','Cơ học|CAD|Gia công|Bảo trì|Lean manufacturing|Technical lead'],
+  ['electrical-engineer','Kỹ sư Điện','Kỹ thuật','Thiết kế, vận hành và bảo trì hệ thống điện, tự động hóa.',16,40,86,48,94,66,52,'engineering,electrical,logic,automation','Electrical Systems,PLC,AutoCAD,Safety,Testing','Nhà máy / Công trình','Mạch điện|PLC|An toàn điện|Tự động hóa|Bảo trì|Engineering manager'],
+  ['architect','Kiến trúc sư','Kiến trúc','Thiết kế không gian, phối hợp kỹ thuật và trình bày phương án kiến trúc.',16,42,78,96,78,88,72,'design,architecture,creative,engineering','Concept Design,AutoCAD,Revit,Presentation,Building Code','Studio / Công trình','Hình khối|AutoCAD/Revit|Quy chuẩn|Concept|Hồ sơ kỹ thuật|Design lead'],
+  ['graphic-designer','Graphic Designer','Sáng tạo','Thiết kế nhận diện, ấn phẩm truyền thông và tài sản hình ảnh thương hiệu.',10,28,81,96,58,78,78,'design,creative,marketing,content','Typography,Branding,Adobe,Figma,Composition','Studio / Remote','Design principles|Adobe/Figma|Branding|Campaign assets|Portfolio|Art direction'],
+  ['communications-specialist','Communication Specialist','Truyền thông','Lập kế hoạch truyền thông, viết thông điệp và quản lý kênh truyền thông.',14,32,83,86,68,95,62,'communication,media,content,business','Writing,PR,Campaign Planning,Stakeholder Management','Văn phòng / Hybrid','Writing|PR basics|Campaign|Media relations|Crisis communication|Comms manager'],
+  ['logistics-coordinator','Logistics Coordinator','Logistics','Điều phối vận chuyển, kho bãi, chứng từ và tối ưu chuỗi cung ứng.',12,30,87,40,86,78,45,'logistics,business,operations,analysis','Supply Chain,Excel,Documentation,Vendor Coordination','Kho / Văn phòng','Supply chain basics|Chứng từ|Excel|Vendor coordination|Optimization|Logistics manager'],
+  ['tourism-operator','Tourism Operator','Du lịch','Thiết kế tour, điều phối dịch vụ và chăm sóc trải nghiệm khách hàng.',10,26,74,82,62,94,56,'tourism,hospitality,communication,people','Itinerary Planning,Customer Service,Operations,Language','Văn phòng / Di chuyển','Tourism basics|Itinerary|Vendor coordination|Customer care|Operations|Tour manager'],
+  ['hotel-manager','Hotel Manager','Hospitality','Quản lý vận hành khách sạn, dịch vụ khách hàng, nhân sự và doanh thu.',16,45,78,72,76,96,64,'hospitality,business,people,operations','Service Operations,Revenue,Leadership,Customer Experience','Khách sạn','Front office|Service quality|Revenue basics|Team management|Operations|General manager'],
+  ['agricultural-engineer','Kỹ sư Nông nghiệp','Nông nghiệp','Ứng dụng kỹ thuật và dữ liệu để cải thiện sản xuất nông nghiệp.',12,30,76,58,86,62,38,'agriculture,science,engineering,environment','Crop Science,IoT,Data,Field Work,Sustainability','Trang trại / Hiện trường','Agronomy|Field practice|IoT/data|Sustainability|Project|Agritech lead'],
+  ['public-policy-analyst','Chuyên viên Chính sách công','Dịch vụ công','Nghiên cứu dữ liệu xã hội, phân tích chính sách và đề xuất giải pháp công.',14,34,70,60,90,88,42,'public,analysis,communication,science','Policy Analysis,Research,Writing,Statistics,Stakeholder','Cơ quan / NGO','Public policy|Research methods|Statistics|Policy writing|Stakeholder consultation|Policy lead'],
+] as const;
+
 async function main() {
   for (const career of careers) {
     await prisma.career.upsert({ where:{slug:career.slug}, update:career, create:career });
+  }
+  for (const [slug,title,category,description,salaryMin,salaryMax,demand,creativity,logic,communication,competition,tags,requiredSkills,workEnvironment,roadmap] of broadCareers) {
+    await prisma.career.upsert({
+      where:{slug},
+      update:{title,category,description,salaryMin,salaryMax,demand,creativity,logic,communication,competition,tags,requiredSkills,workEnvironment,roadmap},
+      create:{slug,title,category,description,salaryMin,salaryMax,demand,creativity,logic,communication,competition,tags,requiredSkills,workEnvironment,roadmap},
+    });
   }
   for (const article of articles) {
     await prisma.article.upsert({ where:{slug:article.slug}, update:article, create:article });
   }
 
-  const email = 'demo@careertwin.vn';
-  const passwordHash = await bcrypt.hash('CareerTwin123!', 12);
-  const user = await prisma.user.upsert({
-    where:{email},
-    update:{passwordHash},
-    create:{name:'CareerTwin Demo',email,passwordHash,role:'student',onboardingCompletedAt:new Date()},
-  });
-  await prisma.profile.upsert({
-    where:{userId:user.id},
-    update:{},
-    create:{userId:user.id,education:'Học sinh',grade:'12',city:'TP. Hồ Chí Minh',readiness:82},
-  });
-  await prisma.userSetting.upsert({where:{userId:user.id},update:{},create:{userId:user.id}});
-  for (const key of ['technology','creative','problem-solving','design']) {
-    await prisma.userInterest.upsert({where:{userId_key:{userId:user.id,key}},update:{weight:100},create:{userId:user.id,key,weight:100}});
+  const allCareers = await prisma.career.findMany({ where: { active: true } });
+  const now = new Date();
+  const skillRows = new Map<string, { id: string; key: string; name: string; source: string; createdAt: Date; updatedAt: Date }>();
+  const careerSkillInputs: { careerId: string; skillKey: string; importance: number; source: string }[] = [];
+  const taskRows: { id: string; careerId: string; title: string; detail: string; order: number; source: string }[] = [];
+  const interestRows: { careerId: string; key: string; weight: number; source: string }[] = [];
+  const marketRows: { careerId: string; localTitle: string; salaryMin: number; salaryMax: number; demand: number; industriesHiring: string[]; educationRoutes: string[]; certifications: string[]; source: string; updatedAt: Date }[] = [];
+  const pathRows: { careerId: string; level: string; order: number; title: string; skills: string[]; tasks: string[]; projects: string[]; createdAt: Date; updatedAt: Date }[] = [];
+
+  for (const career of allCareers) {
+    const skills = career.requiredSkills.split(',').map((item) => item.trim()).filter(Boolean);
+    for (const [index, name] of skills.entries()) {
+      const key = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const id = `skill-${key}`.slice(0, 120);
+      skillRows.set(key, { id, key, name, source: 'careertwin-seed', createdAt: now, updatedAt: now });
+      careerSkillInputs.push({ careerId: career.id, skillKey: key, importance: Math.max(55, 90 - index * 7), source: 'careertwin-seed' });
+    }
+    for (const [index, title] of career.roadmap.split('|').entries()) {
+      taskRows.push({ id: `${career.slug}-task-${index + 1}`, careerId: career.id, title, detail: `Thực hành ${title} trong bối cảnh nghề ${career.title}`, order: index + 1, source: 'careertwin-seed' });
+    }
+    for (const key of career.tags.split(',').map((item) => item.trim()).filter(Boolean).slice(0, 5)) {
+      interestRows.push({ careerId: career.id, key, weight: 75, source: 'careertwin-seed' });
+    }
+    marketRows.push({
+      careerId: career.id,
+      localTitle: career.title,
+      salaryMin: career.salaryMin,
+      salaryMax: career.salaryMax,
+      demand: career.demand,
+      industriesHiring: [career.category],
+      educationRoutes: ['Tự học có dự án', 'Đại học/Cao đẳng liên quan', 'Chứng chỉ nghề phù hợp'],
+      certifications: skills.slice(0, 3),
+      source: 'careertwin-vn-estimate',
+      updatedAt: now,
+    });
+    pathRows.push({
+      careerId: career.id,
+      level: 'beginner',
+      order: 1,
+      title: `Bắt đầu với ${career.title}`,
+      skills,
+      tasks: career.roadmap.split('|').slice(0, 3),
+      projects: [`Mini project mô phỏng ${career.title}`],
+      createdAt: now,
+      updatedAt: now,
+    });
   }
-  for (const [key,level] of [['coding',70],['design',85],['communication',72],['office',78],['analysis',65]] as const) {
-    await prisma.userSkill.upsert({where:{userId_key:{userId:user.id,key}},update:{level},create:{userId:user.id,key,level}});
+
+  await prisma.skill.createMany({ data: [...skillRows.values()], skipDuplicates: true });
+  const storedSkills = await prisma.skill.findMany({ where: { key: { in: [...skillRows.keys()] } }, select: { id: true, key: true } });
+  const skillIds = new Map(storedSkills.map((skill) => [skill.key, skill.id]));
+  const careerSkillRows = careerSkillInputs
+    .map((input) => {
+      const skillId = skillIds.get(input.skillKey);
+      return skillId ? { careerId: input.careerId, skillId, importance: input.importance, source: input.source } : null;
+    })
+    .filter((item): item is { careerId: string; skillId: string; importance: number; source: string } => Boolean(item));
+  await prisma.careerSkill.createMany({ data: careerSkillRows, skipDuplicates: true });
+  await prisma.careerTask.createMany({ data: taskRows, skipDuplicates: true });
+  await prisma.careerInterest.createMany({ data: interestRows, skipDuplicates: true });
+  await prisma.careerMarketData.createMany({ data: marketRows, skipDuplicates: true });
+  await prisma.careerLearningPath.createMany({ data: pathRows, skipDuplicates: true });
+
+  if (process.env.CAREERTWIN_SEED_DEMO === 'true') {
+    const email = 'demo@careertwin.vn';
+    const passwordHash = await bcrypt.hash('CareerTwin123!', 12);
+    const user = await prisma.user.upsert({
+      where:{email},
+      update:{passwordHash},
+      create:{name:'CareerTwin Demo',email,passwordHash,role:'student',onboardingCompletedAt:new Date()},
+    });
+    await prisma.profile.upsert({
+      where:{userId:user.id},
+      update:{},
+      create:{userId:user.id,education:'Học sinh',grade:'12',city:'TP. Hồ Chí Minh',readiness:82},
+    });
+    await prisma.userSetting.upsert({where:{userId:user.id},update:{},create:{userId:user.id}});
+    for (const key of ['technology','creative','problem-solving','design']) {
+      await prisma.userInterest.upsert({where:{userId_key:{userId:user.id,key}},update:{weight:100},create:{userId:user.id,key,weight:100}});
+    }
+    for (const [key,level] of [['coding',70],['design',85],['communication',72],['office',78],['analysis',65]] as const) {
+      await prisma.userSkill.upsert({where:{userId_key:{userId:user.id,key}},update:{level},create:{userId:user.id,key,level}});
+    }
+    await prisma.userGoal.upsert({
+      where:{userId_key:{userId:user.id,key:'career-growth'}},
+      update:{},
+      create:{userId:user.id,key:'career-growth',horizon:'1-3',detail:'Phát triển nghề nghiệp theo thế mạnh cá nhân'},
+    });
   }
-  await prisma.userGoal.upsert({
-    where:{userId_key:{userId:user.id,key:'career-growth'}},
-    update:{},
-    create:{userId:user.id,key:'career-growth',horizon:'1-3',detail:'Phát triển nghề nghiệp theo thế mạnh cá nhân'},
-  });
 }
 
 main()

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { currentUser } from '@/lib/current-user';
-import { recommend } from '@/lib/recommendation-engine';
+import { recommendWithSimulation } from '@/lib/recommendation-engine';
 import { toUserSignal } from '@/lib/user-signal';
 
 const querySchema = z.object({
@@ -27,11 +27,13 @@ export async function GET(request: Request) {
           { tags: { contains: q, mode: 'insensitive' } },
         ] } : {}),
       },
+      include: { skills: { include: { skill: true } } },
       take: limit,
       orderBy: [{ demand: 'desc' }, { title: 'asc' }],
     }),
   ]);
-  const ranked = recommend(careers, toUserSignal(user));
+  const simulations = user ? await db.simulation.findMany({ where: { userId: user.id }, orderBy: { createdAt: 'desc' }, take: 50 }) : [];
+  const ranked = recommendWithSimulation(careers, toUserSignal(user), simulations);
   if (!user) return Response.json(ranked.map((career) => ({ ...career, saved: false })));
   const saved = await db.savedCareer.findMany({ where: { userId: user.id }, select: { careerId: true } });
   const savedIds = new Set(saved.map((item) => item.careerId));

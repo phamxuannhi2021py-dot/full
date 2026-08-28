@@ -7,7 +7,11 @@ import { frames } from '@/lib/figmaFrames';
 import { FigmaModal, InlineStatus } from './FigmaModal';
 import type { CareerView } from './CareerDetailModal';
 
-type RoadmapData={career:CareerView;stages:{stage:number;title:string;progress:number;completedAt?:string|null}[]};
+type RoadmapData={
+  career:CareerView;
+  personalized?:{weakSkills:string[];latestSimulationScore:number|null;focus:string};
+  stages:{stage:number;title:string;note?:string|null;progress:number;completedAt?:string|null}[];
+};
 
 export default function FigmaRoadmapClient({variant}:{variant:'map'|'roadmap'}) {
   const params=useSearchParams();
@@ -46,6 +50,7 @@ export default function FigmaRoadmapClient({variant}:{variant:'map'|'roadmap'}) 
         <div className="figma-dynamic-text" style={{left:323,top:139,width:205,height:31,fontSize:18,fontWeight:800,padding:'1px 2px'}}>{data.career.title}</div>
         <div className="figma-dynamic-text" style={{left:527,top:130,width:90,height:26,fontSize:10,color:'#079d61',fontWeight:700,padding:'8px 3px'}}>{data.career.match??data.career.demand}% phù hợp</div>
         <div className="figma-dynamic-text" style={{left:1355,top:531,width:38,height:23,fontSize:11,fontWeight:700,padding:'5px'}}>{average}%</div>
+        <div className="figma-dynamic-text" style={{left:982,top:758,width:360,height:38,fontSize:11,fontWeight:700,padding:'5px',lineHeight:1.25,overflow:'hidden'}}>Focus: {data.personalized?.focus||data.career.category}</div>
         <button className="figma-action" style={{left:1244,top:123,width:146,height:36}} onClick={()=>setPicker(true)} aria-label="Thay đổi mục tiêu"/>
         <button className="figma-action" style={{left:1180,top:560,width:210,height:34}} onClick={()=>setProgressOpen(true)} aria-label="Xem chi tiết chặng"/>
         <button className="figma-action" style={{left:977,top:812,width:417,height:34}} onClick={askAI} aria-label="Nhận tư vấn chi tiết từ AI"/>
@@ -53,6 +58,7 @@ export default function FigmaRoadmapClient({variant}:{variant:'map'|'roadmap'}) 
       {data&&variant==='roadmap'&&<>
         <div className="figma-dynamic-text" style={{left:358,top:186,width:200,height:30,fontSize:14,fontWeight:800,padding:'2px'}}>{data.career.title}</div>
         <div className="figma-dynamic-text" style={{left:1172,top:461,width:53,height:35,fontSize:20,fontWeight:800,padding:'5px',textAlign:'center'}}>{average}%</div>
+        <div className="figma-dynamic-text" style={{left:850,top:188,width:300,height:30,fontSize:11,fontWeight:700,padding:'5px',overflow:'hidden'}}>Focus: {data.personalized?.focus||data.career.category}</div>
         <button className="figma-action" style={{left:565,top:931,width:220,height:32}} onClick={()=>setProgressOpen(true)} aria-label="Xem chi tiết từng giai đoạn"/>
         <button className="figma-action" style={{left:1190,top:936,width:190,height:30}} onClick={askAI} aria-label="Xem khóa học phù hợp"/>
         <button className="figma-action" style={{left:282,top:129,width:300,height:170}} onClick={()=>setPicker(true)} aria-label="Thay đổi nghề mục tiêu"/>
@@ -64,7 +70,8 @@ export default function FigmaRoadmapClient({variant}:{variant:'map'|'roadmap'}) 
     </FigmaModal>
     <FigmaModal open={progressOpen} title={`Tiến độ · ${data?.career.title||''}`} onClose={()=>setProgressOpen(false)} wide>
       <InlineStatus error={status.error} success={status.success}/>
-      <div className="ct-report-list">{data?.stages.map((stage)=><div className="ct-question" key={stage.stage}><p>{stage.stage}. {stage.title} — {stage.progress}%</p><input type="range" min="0" max="100" step="10" value={stage.progress} onChange={(event)=>setData((current)=>current?{...current,stages:current.stages.map((item)=>item.stage===stage.stage?{...item,progress:Number(event.target.value)}:item)}:current)} onPointerUp={(event)=>update(stage.stage,Number((event.target as HTMLInputElement).value))}/><div className="ct-question-labels"><span>Chưa bắt đầu</span><span>Hoàn thành</span></div></div>)}</div>
+      {data?.personalized&&<p>Focus hiện tại: <b>{data.personalized.focus}</b>{data.personalized.latestSimulationScore!=null?` · simulation gần nhất ${data.personalized.latestSimulationScore}/100`:''}</p>}
+      <div className="ct-report-list">{data?.stages.map((stage)=><div className="ct-question" key={stage.stage}><p>{stage.stage}. {stage.title} — {stage.progress}%</p>{stage.note&&<small>{stage.note}</small>}<input type="range" min="0" max="100" step="10" value={stage.progress} onChange={(event)=>setData((current)=>current?{...current,stages:current.stages.map((item)=>item.stage===stage.stage?{...item,progress:Number(event.target.value)}:item)}:current)} onPointerUp={(event)=>update(stage.stage,Number((event.target as HTMLInputElement).value))}/><div className="ct-question-labels"><span>Chưa bắt đầu</span><span>Hoàn thành</span></div></div>)}</div>
     </FigmaModal>
     <FigmaModal open={aiOpen} title="CareerTwin AI · Gợi ý lộ trình" onClose={()=>setAiOpen(false)} wide>
       <InlineStatus error={status.error}/><p style={{whiteSpace:'pre-wrap'}}>{status.loading?'AI đang phân tích tiến độ của bạn…':ai}</p>

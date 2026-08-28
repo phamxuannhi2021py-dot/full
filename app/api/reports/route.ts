@@ -8,7 +8,7 @@ async function reportForCurrentUser() {
   const user = await currentUser();
   if (!user) return null;
   const [careers, simulations] = await Promise.all([
-    db.career.findMany({ where: { active: true } }),
+    db.career.findMany({ where: { active: true }, include: { skills: { include: { skill: true } } } }),
     db.simulation.findMany({ where: { userId: user.id }, include: { career: true }, orderBy: { createdAt: 'desc' } }),
   ]);
   return { user, report: buildCareerReport({
